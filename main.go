@@ -10,14 +10,12 @@ import (
 )
 
 func main() {
-    router := mux.NewRouter()
+    db.Init()
 
-    // Initialize the database connection
-    db.InitDB("root:@tcp(127.0.0.1:3306)/learn_go")
+    r := mux.NewRouter()
+    r.HandleFunc("/users", handlers.GetUsers).Methods("GET")
+    r.HandleFunc("/products", handlers.GetProducts).Methods("GET")
+    r.HandleFunc("/products/{id}", handlers.GetProduct).Methods("GET")
 
-    // Define routes
-    router.HandleFunc("/users", handlers.GetUsers).Methods("GET")
-
-    // Start the server
-    log.Fatal(http.ListenAndServe(":8000", router))
+    log.Fatal(http.ListenAndServe(":8000", r))
 }
