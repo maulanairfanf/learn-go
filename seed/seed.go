@@ -5,10 +5,15 @@ import (
 	"myapi/db"
 	"myapi/models"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
     db.Init()
+
+    // Seed users
+    seedUsers()
 
     // Seed categories
     seedCategories()
@@ -17,6 +22,42 @@ func main() {
     seedProducts()
 
     log.Println("Seed data created successfully")
+}
+
+// hashPassword hashes the given password using bcrypt
+func hashPassword(password string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("Failed to generate password hash: %v", err)
+	}
+	return string(hash)
+}
+
+func seedUsers() {
+	// Create users
+	users := []models.User{
+		{
+			Username:  "user1",
+			Password:  hashPassword("password1"),
+			Email:     "user1@example.com",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			Username:  "user2",
+			Password:  hashPassword("password2"),
+			Email:     "user2@example.com",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		// Add more users as needed
+	}
+
+	for _, user := range users {
+		if err := db.DB.Create(&user).Error; err != nil {
+			log.Fatalf("Failed to create user: %v", err)
+		}
+	}
 }
 
 func seedCategories() {
