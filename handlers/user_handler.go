@@ -81,7 +81,7 @@ func generateJWTToken(userID uint) (string, error) {
 
     // Generate JWT token
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    jwtSecret := []byte("JWT-SECRET-KEY") // Change this to your secret key
+    jwtSecret := []byte("your-secret-key-lah") // Change this to your secret key
     signedToken, err := token.SignedString(jwtSecret)
     if err != nil {
         return "", err

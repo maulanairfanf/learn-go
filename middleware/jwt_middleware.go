@@ -9,7 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtSecret = []byte("your-secret-key")
+var jwtSecret = []byte("your-secret-key-lah")
 
 // JWTMiddleware is a middleware function that checks the presence and validity of a JWT token
 func JWTMiddleware(next http.Handler) http.Handler {
