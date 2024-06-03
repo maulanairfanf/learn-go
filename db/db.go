@@ -19,5 +19,5 @@ func Init() {
     }
 
     // Migrate the schema
-    DB.AutoMigrate(&models.User{})
+    DB.AutoMigrate(&models.Category{}, &models.Product{}, &models.User{})
 }
