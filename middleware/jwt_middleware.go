@@ -4,15 +4,16 @@ import (
 	"context"
 	"myapi/models"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtSecret = []byte("your-secret-key-lah")
-
 // JWTMiddleware is a middleware function that checks the presence and validity of a JWT token
 func JWTMiddleware(next http.Handler) http.Handler {
+	jwtSecret := []byte(os.Getenv("JWT_SECRET")) // Change this to your secret key
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -28,7 +29,6 @@ func JWTMiddleware(next http.Handler) http.Handler {
 
 		// Extract the token
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
 		// Parse the token
 		token, err := jwt.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
