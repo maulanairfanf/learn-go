@@ -25,8 +25,8 @@ func InitializeRoutes() *gin.Engine {
 		product.GET("", handlers.GetProducts)
 		product.GET(":id", handlers.GetProduct)
 		product.POST("", handlers.CreateProduct)
-		router.DELETE(":id", middleware.JWTMiddlewareGin(), handlers.DeleteProduct)
-		router.PUT(":id", middleware.JWTMiddlewareGin(), handlers.UpdateProduct)
+		product.DELETE(":id", handlers.DeleteProduct)
+		product.PUT(":id", handlers.UpdateProduct)
 	}
 
 
