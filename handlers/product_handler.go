@@ -2,34 +2,34 @@ package handlers
 
 import (
 	"errors"
-	"myapi/db"
 	"myapi/models"
+	"myapi/services"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// GetProducts handles retrieving all products along with their categories
+var productService = services.NewProductService()
+
 func GetProducts(c *gin.Context) {
-	var products []models.Product
-	if err := db.DB.Preload("Categories").Find(&products).Error; err != nil {
+	products, err := productService.GetAll()
+	if err != nil {
 		ErrorResponse(c, 500, err.Error())
 		return
 	}
 	SuccessResponse(c, products)
 }
 
-
-// GetProduct handles retrieving a single product by ID along with its categories
 func GetProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		ErrorResponse(c, 400, "Invalid product ID")
 		return
 	}
-	var product models.Product
-	if err := db.DB.Preload("Categories").First(&product, id).Error; err != nil {
+
+	product, err := productService.GetByID(id)
+	if err != nil {
 		ErrorResponse(c, 404, "Product not found")
 		return
 	}
@@ -43,48 +43,18 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var categories []models.Category
-	if len(req.Categories) > 0 {
-		if err := db.DB.Where("id IN ?", req.Categories).Find(&categories).Error; err != nil {
-			ErrorResponse(c, 400, "Invalid category IDs")
-			return
-		}
-	}
-
-	product := models.Product{
-		Name:        req.Name,
-		Quantity:    req.Quantity,
-		Categories:  categories,
-		Price:       req.Price,
-		Description: req.Description,
-	}
-
-	if err := db.DB.Create(&product).Error; err != nil {
+	product, err := productService.Create(req)
+	if err != nil {
 		ErrorResponse(c, 500, err.Error())
 		return
 	}
-
-	db.DB.Preload("Categories").First(&product, product.ID)
 	SuccessResponse(c, product)
 }
-
-
-// UpdateProduct handles the update of an existing product
 
 func UpdateProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		ErrorResponse(c, 400, "Invalid product ID")
-		return
-	}
-
-	var product models.Product
-	if err := db.DB.Preload("Categories").First(&product, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			ErrorResponse(c, 404, "Product not found")
-		} else {
-			ErrorResponse(c, 500, err.Error())
-		}
 		return
 	}
 
@@ -94,40 +64,8 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// Update fields
-	product.Name = req.Name
-	product.Quantity = req.Quantity
-	product.Price = req.Price
-	product.Description = req.Description
-
-	// Update categories
-	var categories []models.Category
-	if len(req.Categories) > 0 {
-		if err := db.DB.Where("id IN ?", req.Categories).Find(&categories).Error; err != nil {
-			ErrorResponse(c, 400, "Invalid category IDs")
-			return
-		}
-	}
-	db.DB.Model(&product).Association("Categories").Replace(categories)
-
-	if err := db.DB.Save(&product).Error; err != nil {
-		ErrorResponse(c, 500, err.Error())
-		return
-	}
-	db.DB.Preload("Categories").First(&product, product.ID)
-	SuccessResponse(c, product)
-}
-
-
-// DeleteProduct handles the deletion of a product by ID
-func DeleteProduct(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	product, err := productService.Update(id, req)
 	if err != nil {
-		ErrorResponse(c, 400, "Invalid product ID")
-		return
-	}
-	var product models.Product
-	if err := db.DB.Preload("Categories").First(&product, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ErrorResponse(c, 404, "Product not found")
 		} else {
@@ -135,12 +73,22 @@ func DeleteProduct(c *gin.Context) {
 		}
 		return
 	}
-	if err := db.DB.Model(&product).Association("Categories").Clear(); err != nil {
-		ErrorResponse(c, 500, err.Error())
+	SuccessResponse(c, product)
+}
+
+func DeleteProduct(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		ErrorResponse(c, 400, "Invalid product ID")
 		return
 	}
-	if err := db.DB.Delete(&product).Error; err != nil {
-		ErrorResponse(c, 500, err.Error())
+
+	if err := productService.Delete(id); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ErrorResponse(c, 404, "Product not found")
+		} else {
+			ErrorResponse(c, 500, err.Error())
+		}
 		return
 	}
 	SuccessResponse(c, "Product deleted successfully")

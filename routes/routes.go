@@ -10,6 +10,7 @@ import (
 // InitializeRoutes sets up the Gin router with all the routes and middleware
 func InitializeRoutes() *gin.Engine {
 	router := gin.Default()
+	router.Use(middleware.LoggerMiddleware())
 
 	// Root endpoint for health check or welcome message
 	router.GET("/", func(c *gin.Context) {
@@ -18,6 +19,16 @@ func InitializeRoutes() *gin.Engine {
 
 	// Define routes
 	router.POST("/login", handlers.Login)
+	router.POST("/register", handlers.Register)
+
+	user := router.Group("/user")
+	user.Use(middleware.JWTMiddlewareGin())
+	{
+		user.GET("", handlers.GetUsers)
+		user.GET(":id", handlers.GetUser)
+		user.PUT(":id", handlers.UpdateUser)
+		user.DELETE(":id", handlers.DeleteUser)
+	}
 
 	product := router.Group("/product")
 	product.Use(middleware.JWTMiddlewareGin())
@@ -28,7 +39,6 @@ func InitializeRoutes() *gin.Engine {
 		product.DELETE(":id", handlers.DeleteProduct)
 		product.PUT(":id", handlers.UpdateProduct)
 	}
-
 
 	category := router.Group("/category")
 	category.Use(middleware.JWTMiddlewareGin())
@@ -42,5 +52,3 @@ func InitializeRoutes() *gin.Engine {
 
 	return router
 }
-
-

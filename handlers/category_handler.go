@@ -2,24 +2,25 @@ package handlers
 
 import (
 	"errors"
-	"myapi/db"
 	"myapi/models"
+	"myapi/services"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
+var categoryService = services.NewCategoryService()
+
 // GetCategories handles retrieving all categories
 func GetCategories(c *gin.Context) {
-	var categories []models.Category
-	if err := db.DB.Find(&categories).Error; err != nil {
+	categories, err := categoryService.GetAll()
+	if err != nil {
 		ErrorResponse(c, 500, err.Error())
 		return
 	}
 	SuccessResponse(c, categories)
 }
-
 
 // GetCategory handles retrieving a single category by ID
 func GetCategory(c *gin.Context) {
@@ -29,8 +30,8 @@ func GetCategory(c *gin.Context) {
 		return
 	}
 
-	var category models.Category
-	if err := db.DB.First(&category, id).Error; err != nil {
+	category, err := categoryService.GetByID(id)
+	if err != nil {
 		ErrorResponse(c, 404, "Category not found")
 		return
 	}
@@ -40,12 +41,14 @@ func GetCategory(c *gin.Context) {
 
 // CreateCategory handles the creation of a new category
 func CreateCategory(c *gin.Context) {
-	var category models.Category
-	if err := c.ShouldBindJSON(&category); err != nil {
+	var req models.CreateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		ErrorResponse(c, 400, "Invalid request payload")
 		return
 	}
-	if err := db.DB.Create(&category).Error; err != nil {
+
+	category, err := categoryService.Create(req)
+	if err != nil {
 		ErrorResponse(c, 500, err.Error())
 		return
 	}
@@ -60,33 +63,20 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	var category models.Category
-	if err := db.DB.First(&category, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			ErrorResponse(c, 404, "Category not found")
-			return
-		} else {
-			ErrorResponse(c, 500, err.Error())
-			return
-		}
-	}
-
 	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ErrorResponse(c, 400, "Invalid request payload")
 		return
 	}
 
-	category.Name = req.Name
-
-	if err := db.DB.Save(&category).Error; err != nil {
+	category, err := categoryService.Update(id, req)
+	if err != nil {
 		ErrorResponse(c, 500, err.Error())
 		return
 	}
 
 	SuccessResponse(c, category)
 }
-
 
 func DeleteCategory(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
@@ -95,8 +85,8 @@ func DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	var category models.Category
-	if err := db.DB.First(&category, id).Error; err != nil {
+	_, err = categoryService.Delete(id)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ErrorResponse(c, 404, "Category not found")
 			return
@@ -105,11 +95,5 @@ func DeleteCategory(c *gin.Context) {
 			return
 		}
 	}
-
-	if err := db.DB.Delete(&category, id).Error; err != nil {
-		ErrorResponse(c, 500, err.Error())
-		return
-	}
-
 	SuccessResponse(c, "Category deleted successfully")
 }

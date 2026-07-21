@@ -1,37 +1,63 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 	"myapi/db"
 	"myapi/routes"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	// Initialize the database
 	db.Init()
 
-// Get the port from environment variables or use default port 8080
-port := os.Getenv("PORT")
-if port == "" {
-	port = "8080" // Default port
-}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-// Initialize the router
-router := routes.InitializeRoutes()
+	router := routes.InitializeRoutes()
 
-// Start the server
-log.Printf("Starting server on port %s...\n", port)
-if err := http.ListenAndServe(":"+port, router); err != nil {
-	log.Fatalf("Server failed to start: %v", err)
-}
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: router,
+	}
+
+	// Jalanin server di goroutine terpisah
+	go func() {
+		slog.Info("Starting server", "port", port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	// Tunggu sinyal berhenti (Ctrl+C / SIGTERM)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	slog.Info("Shutting down server...")
+
+	// Kasih waktu 5 detik buat request yang lagi jalan selesai
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	db.Close()
+	slog.Info("Server exited")
 }
