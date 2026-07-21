@@ -27,28 +27,28 @@ type LoginResponse struct {
 func Login(c *gin.Context) {
 	var loginReq LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
-		ErrorResponse(c, 400, "Invalid request payload")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid request payload"})
 		return
 	}
 
 	user, err := authService.Login(loginReq.Username, loginReq.Password)
 	if err != nil {
-		ErrorResponse(c, 401, err.Error())
+		ErrorResponse(ErrorParams{C: c, Status: 401, Message: err.Error()})
 		return
 	}
 
 	token, err := authService.GenerateToken(user.ID)
 	if err != nil {
-		ErrorResponse(c, 500, "Failed to generate token")
+		ErrorResponse(ErrorParams{C: c, Status: 500, Message: "Failed to generate token"})
 		return
 	}
-	SuccessResponse(c, LoginResponse{Token: token})
+	SuccessResponse(SuccessParams{C: c, Data: LoginResponse{Token: token}, Message: "success"})
 }
 
 func Register(c *gin.Context) {
 	var registerReq RegisterRequest
 	if err := c.ShouldBindJSON(&registerReq); err != nil {
-		ErrorResponse(c, 400, "Invalid request payload")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid request payload"})
 		return
 	}
 
@@ -60,9 +60,9 @@ func Register(c *gin.Context) {
 
 	_, err := authService.Register(user)
 	if err != nil {
-		ErrorResponse(c, 500, err.Error())
+		ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 		return
 	}
 
-	SuccessResponse(c, "Success Registration")
+	SuccessResponse(SuccessParams{C: c, Data: "Success Registration", Message: "success"})
 }

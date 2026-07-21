@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log/slog"
 	"myapi/models"
 	"myapi/repositories"
 )
@@ -39,12 +40,13 @@ func (s *UserService) Delete(id int) (*models.User, error) {
 }
 
 func (s *UserService) Update(id int, req models.UpdateUserRequest) (*models.User, error) {
-	user, err := s.repo.FindByUsername(req.Username)
-	if user != nil {
-		return nil, errors.New("username used")
+	slog.Info("request update", "username", req.Username)
+	_, err := s.repo.FindByUsername(req.Username)
+	if err == nil {
+		return nil, errors.New("username already taken")
 	}
 
-	user, err = s.repo.FindByID(id)
+	user, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}

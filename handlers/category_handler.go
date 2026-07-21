@@ -16,84 +16,84 @@ var categoryService = services.NewCategoryService()
 func GetCategories(c *gin.Context) {
 	categories, err := categoryService.GetAll()
 	if err != nil {
-		ErrorResponse(c, 500, err.Error())
+		ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 		return
 	}
-	SuccessResponse(c, categories)
+	SuccessResponse(SuccessParams{C: c, Data: categories, Message: "success"})
 }
 
 // GetCategory handles retrieving a single category by ID
 func GetCategory(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		ErrorResponse(c, 400, "Invalid Category ID")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid Category ID"})
 		return
 	}
 
 	category, err := categoryService.GetByID(id)
 	if err != nil {
-		ErrorResponse(c, 404, "Category not found")
+		ErrorResponse(ErrorParams{C: c, Status: 404, Message: "Category not found"})
 		return
 	}
 
-	SuccessResponse(c, category)
+	SuccessResponse(SuccessParams{C: c, Data: category, Message: "success"})
 }
 
 // CreateCategory handles the creation of a new category
 func CreateCategory(c *gin.Context) {
 	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ErrorResponse(c, 400, "Invalid request payload")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid request payload"})
 		return
 	}
 
 	category, err := categoryService.Create(req)
 	if err != nil {
-		ErrorResponse(c, 500, err.Error())
+		ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 		return
 	}
-	SuccessResponse(c, category)
+	SuccessResponse(SuccessParams{C: c, Data: category, Message: "success"})
 }
 
 // UpdateCategory handles the update of a category
 func UpdateCategory(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		ErrorResponse(c, 400, "Invalid Category ID")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid Category ID"})
 		return
 	}
 
 	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ErrorResponse(c, 400, "Invalid request payload")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid request payload"})
 		return
 	}
 
 	category, err := categoryService.Update(id, req)
 	if err != nil {
-		ErrorResponse(c, 500, err.Error())
+		ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 		return
 	}
 
-	SuccessResponse(c, category)
+	SuccessResponse(SuccessParams{C: c, Data: category, Message: "success"})
 }
 
 func DeleteCategory(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		ErrorResponse(c, 400, "Invalid Category Id")
+		ErrorResponse(ErrorParams{C: c, Status: 400, Message: "Invalid Category Id"})
 		return
 	}
 
 	_, err = categoryService.Delete(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			ErrorResponse(c, 404, "Category not found")
+			ErrorResponse(ErrorParams{C: c, Status: 404, Message: "Category not found"})
 			return
 		} else {
-			ErrorResponse(c, 500, err.Error())
+			ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 			return
 		}
 	}
-	SuccessResponse(c, "Category deleted successfully")
+	SuccessResponse(SuccessParams{C: c, Data: "Category deleted successfully", Message: "success"})
 }
