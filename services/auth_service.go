@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"myapi/models"
 	"myapi/repositories"
 	"os"
@@ -47,7 +46,7 @@ func (s *AuthService) Login(username, password string) (*models.User, error) {
 	}
 
 	if !s.userRepo.MatchPassword(password, user.Password) {
-		return nil, errors.New("invalid username or password")
+		return nil, ErrInvalidInput
 	}
 
 	return user, nil

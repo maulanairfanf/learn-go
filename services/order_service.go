@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"myapi/db"
 	"myapi/models"
 	"myapi/repositories"
@@ -37,11 +36,11 @@ func (s *OrderService) Create(req models.OrderPayload, userID uint) (*models.Ord
 		for _, item := range req.Items {
 			var product models.Product
 			if err := tx.First(&product, item.ProductID).Error; err != nil {
-				return errors.New("product not found")
+				return gorm.ErrRecordNotFound
 			}
 
 			if product.Quantity < item.Quantity {
-				return errors.New("Insufficient stock for product: " + product.Name)
+				return ErrInsufficientStock
 			}
 
 			subTotal := product.Price * float64(item.Quantity)
@@ -91,7 +90,7 @@ func (s *OrderService) Pay(id int) (*models.Order, error) {
 	}
 
 	if order.Status != "pending" {
-		return nil, errors.New("transaction status should be pending")
+		return nil, ErrInvalidStatus
 	}
 
 	order.Status = "paid"
@@ -102,11 +101,11 @@ func (s *OrderService) Pay(id int) (*models.Order, error) {
 func (s *OrderService) Cancel(id int) (*models.Order, error) {
 	order, err := s.repo.FindByID(id)
 	if err != nil {
-		return nil, errors.New("order not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	if order.Status != "pending" {
-		return nil, errors.New("transaction status should be pending")
+		return nil, ErrInvalidStatus
 	}
 
 	err = db.DB.Transaction(func(tx *gorm.DB) error {
@@ -129,7 +128,7 @@ func (s *OrderService) Cancel(id int) (*models.Order, error) {
 func (s *OrderService) Delete(id int) (*models.Order, error) {
 	order, err := s.repo.FindByID(id)
 	if err != nil {
-		return nil, errors.New("order not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	err = db.DB.Transaction(func(tx *gorm.DB) error {

@@ -1,8 +1,6 @@
 package services
 
 import (
-	"errors"
-
 	"myapi/models"
 	"myapi/repositories"
 )
@@ -28,7 +26,7 @@ func (s *ProductService) GetByID(id int) (*models.Product, error) {
 func (s *ProductService) Create(req models.CreateProductRequest) (*models.Product, error) {
 	categories, err := s.repo.FindCategoriesByIDs(req.Categories)
 	if err != nil {
-		return nil, errors.New("invalid category IDs")
+		return nil, ErrInvalidInput
 	}
 
 	product := models.Product{
@@ -61,7 +59,7 @@ func (s *ProductService) Update(id int, req models.CreateProductRequest) (*model
 	if len(req.Categories) > 0 {
 		categories, err := s.repo.FindCategoriesByIDs(req.Categories)
 		if err != nil {
-			return nil, errors.New("invalid category IDs")
+			return nil, ErrInvalidInput
 		}
 		s.repo.ReplaceCategories(product, categories)
 	}

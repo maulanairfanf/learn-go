@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"errors"
 	"myapi/models"
 	"myapi/services"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 var authService = services.NewAuthService()
@@ -33,7 +35,11 @@ func Login(c *gin.Context) {
 
 	user, err := authService.Login(loginReq.Username, loginReq.Password)
 	if err != nil {
-		ErrorResponse(ErrorParams{C: c, Status: 401, Message: err.Error()})
+		if errors.Is(err, services.ErrInvalidInput) || errors.Is(err, gorm.ErrRecordNotFound) {
+			ErrorResponse(ErrorParams{C: c, Status: 401, Message: "Invalid username or password"})
+		} else {
+			ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
+		}
 		return
 	}
 

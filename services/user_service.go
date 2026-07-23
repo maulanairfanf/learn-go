@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"log/slog"
 	"myapi/models"
 	"myapi/repositories"
@@ -43,7 +42,7 @@ func (s *UserService) Update(id int, req models.UpdateUserRequest) (*models.User
 	slog.Info("request update", "username", req.Username)
 	_, err := s.repo.FindByUsername(req.Username)
 	if err == nil {
-		return nil, errors.New("username already taken")
+		return nil, ErrConflict
 	}
 
 	user, err := s.repo.FindByID(id)

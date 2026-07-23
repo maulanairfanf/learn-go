@@ -30,7 +30,11 @@ func GetProduct(c *gin.Context) {
 
 	product, err := productService.GetByID(id)
 	if err != nil {
-		ErrorResponse(ErrorParams{C: c, Status: 404, Message: "Product not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ErrorResponse(ErrorParams{C: c, Status: 404, Message: "Product not found"})
+		} else {
+			ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
+		}
 		return
 	}
 	SuccessResponse(SuccessParams{C: c, Data: product, Message: "success"})
@@ -68,6 +72,8 @@ func UpdateProduct(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ErrorResponse(ErrorParams{C: c, Status: 404, Message: "Product not found"})
+		} else if errors.Is(err, services.ErrInvalidInput) {
+			ErrorResponse(ErrorParams{C: c, Status: 400, Message: err.Error()})
 		} else {
 			ErrorResponse(ErrorParams{C: c, Status: 500, Message: err.Error()})
 		}
