@@ -50,5 +50,16 @@ func InitializeRoutes() *gin.Engine {
 		category.DELETE(":id", handlers.DeleteCategory)
 	}
 
+	order := router.Group("/order")
+	order.Use(middleware.JWTMiddlewareGin())
+	{
+		order.GET("", handlers.GetOrders)
+		order.GET(":id", handlers.GetOrder)
+		order.DELETE(":id", handlers.DeleteOrder)
+		order.POST("", handlers.CreateOrder)
+		order.PUT(":id/paid", handlers.PayOrder)
+		order.PUT(":id/cancel", handlers.CancelOrder)
+	}
+
 	return router
 }
